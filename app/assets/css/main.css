@@ -1,0 +1,144 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme inline {
+  --font-retro: "Press Start 2P", monospace;
+  --font-mono: "Space Mono", monospace;
+  --font-display: "VT323", monospace;
+
+  --color-background: hsl(240 20% 4%);
+  --color-foreground: hsl(120 100% 80%);
+
+  --color-card: hsl(240 15% 8% / 0.85);
+  --color-card-foreground: hsl(120 100% 80%);
+
+  --color-popover: hsl(240 15% 8%);
+  --color-popover-foreground: hsl(120 100% 80%);
+
+  --color-primary: hsl(120 100% 65%);
+  --color-primary-foreground: hsl(240 20% 4%);
+
+  --color-secondary: hsl(280 80% 60%);
+  --color-secondary-foreground: hsl(120 100% 90%);
+
+  --color-muted: hsl(240 15% 12%);
+  --color-muted-foreground: hsl(120 40% 55%);
+
+  --color-accent: hsl(180 100% 40%);
+  --color-accent-foreground: hsl(240 20% 4%);
+
+  --color-destructive: hsl(0 80% 50%);
+  --color-destructive-foreground: hsl(0 0% 98%);
+
+  --color-border: hsl(120 60% 25% / 0.4);
+  --color-input: hsl(240 15% 14%);
+  --color-ring: hsl(120 100% 65%);
+
+  --color-retro-glow: hsl(120 100% 65%);
+  --color-retro-cyan: hsl(180 100% 50%);
+  --color-retro-magenta: hsl(300 100% 60%);
+  --color-retro-amber: hsl(40 100% 55%);
+
+  --radius: 0.25rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
+    background-color: var(--color-background);
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-mono);
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-retro);
+  }
+}
+
+/* Retro scanline overlay effect */
+@layer utilities {
+  .retro-scanlines::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.15) 2px,
+      rgba(0, 0, 0, 0.15) 4px
+    );
+    z-index: 50;
+  }
+
+  .retro-glow {
+    text-shadow:
+      0 0 7px hsl(120 100% 65%),
+      0 0 10px hsl(120 100% 65% / 0.5),
+      0 0 21px hsl(120 100% 65% / 0.3),
+      0 0 42px hsl(120 100% 40% / 0.2);
+  }
+
+  .retro-glow-cyan {
+    text-shadow:
+      0 0 7px hsl(180 100% 50%),
+      0 0 10px hsl(180 100% 50% / 0.5),
+      0 0 21px hsl(180 100% 50% / 0.3);
+  }
+
+  .retro-glow-magenta {
+    text-shadow:
+      0 0 7px hsl(300 100% 60%),
+      0 0 10px hsl(300 100% 60% / 0.5),
+      0 0 21px hsl(300 100% 60% / 0.3);
+  }
+
+  .retro-box-glow {
+    box-shadow:
+      0 0 5px hsl(120 100% 65% / 0.3),
+      0 0 15px hsl(120 100% 65% / 0.15),
+      inset 0 0 5px hsl(120 100% 65% / 0.05);
+  }
+
+  .retro-flicker {
+    animation: flicker 3s infinite;
+  }
+
+  .retro-blink {
+    animation: blink 1s step-end infinite;
+  }
+
+  .retro-pixel-border {
+    border: 2px solid hsl(120 100% 65% / 0.5);
+    box-shadow:
+      3px 3px 0 hsl(120 100% 65% / 0.2),
+      -1px -1px 0 hsl(120 100% 65% / 0.1);
+  }
+
+  .font-retro {
+    font-family: var(--font-retro);
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+  }
+}
+
+@keyframes flicker {
+  0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% {
+    opacity: 1;
+  }
+  20%, 21.999%, 63%, 63.999%, 65%, 69.999% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
