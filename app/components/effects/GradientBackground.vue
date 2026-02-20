@@ -10,8 +10,22 @@
     <div class="blob blob-bottom-right" />
     <div class="blob blob-center" />
 
-    <!-- Grid overlay (retro terminal grid) -->
+    <!-- Retro terminal grid -->
     <div class="retro-grid" />
+
+    <!-- Subtle glitch layers -->
+    <div class="glitch-layer glitch-layer-1" />
+    <div class="glitch-layer glitch-layer-2" />
+    <div class="glitch-layer glitch-layer-3" />
+
+    <!-- Animated noise texture -->
+    <div class="noise" />
+
+    <!-- Horizontal glitch bands -->
+    <div class="glitch-bands" />
+
+    <!-- Scanlines -->
+    <div class="scanlines" />
 
     <!-- Vignette -->
     <div class="vignette" />
@@ -119,6 +133,121 @@
   -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, transparent 75%);
 }
 
+/* ========== GLITCH LAYERS ========== */
+
+/* Subtle color-shifted glitch blocks that appear intermittently */
+.glitch-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: screen;
+}
+
+.glitch-layer-1 {
+  background: linear-gradient(
+    0deg,
+    transparent 0%,
+    transparent 42%,
+    hsl(120 100% 50% / 0.02) 42.5%,
+    hsl(120 100% 50% / 0.04) 43%,
+    transparent 44%,
+    transparent 67%,
+    hsl(180 100% 50% / 0.025) 67.5%,
+    transparent 69%,
+    transparent 100%
+  );
+  animation: glitch-flash-1 8s ease-in-out infinite;
+}
+
+.glitch-layer-2 {
+  background: linear-gradient(
+    0deg,
+    transparent 0%,
+    transparent 25%,
+    hsl(300 80% 60% / 0.02) 25.5%,
+    transparent 27%,
+    transparent 78%,
+    hsl(120 80% 50% / 0.03) 78.5%,
+    hsl(120 80% 50% / 0.015) 80%,
+    transparent 81%,
+    transparent 100%
+  );
+  animation: glitch-flash-2 12s ease-in-out infinite;
+}
+
+.glitch-layer-3 {
+  background: linear-gradient(
+    0deg,
+    transparent 0%,
+    transparent 55%,
+    hsl(180 100% 50% / 0.03) 55.5%,
+    transparent 56.5%,
+    transparent 88%,
+    hsl(120 100% 45% / 0.02) 88.5%,
+    transparent 90%,
+    transparent 100%
+  );
+  animation: glitch-flash-3 15s ease-in-out infinite;
+}
+
+/* Animated noise grain */
+.noise {
+  position: absolute;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+  opacity: 0.025;
+  animation: noise-drift 0.5s steps(4) infinite;
+}
+
+/* Horizontal glitch bands — thin colored lines that drift */
+.glitch-bands {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      0deg,
+      transparent 0%,
+      transparent 15.2%,
+      hsl(120 100% 50% / 0.012) 15.3%,
+      transparent 15.5%,
+      transparent 33.7%,
+      hsl(180 100% 50% / 0.015) 33.8%,
+      transparent 34.1%,
+      transparent 52.4%,
+      hsl(300 80% 60% / 0.01) 52.5%,
+      transparent 52.8%,
+      transparent 71.1%,
+      hsl(120 100% 50% / 0.012) 71.2%,
+      transparent 71.5%,
+      transparent 89.6%,
+      hsl(180 100% 50% / 0.01) 89.7%,
+      transparent 90%,
+      transparent 100%
+    );
+  animation: bands-drift 20s linear infinite;
+}
+
+/* CRT scanlines */
+.scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
+  opacity: 0.6;
+}
+
 /* Soft vignette on edges */
 .vignette {
   position: absolute;
@@ -126,7 +255,9 @@
   background: radial-gradient(ellipse at center, transparent 40%, rgba(3, 5, 3, 0.7) 100%);
 }
 
-/* Floating animation */
+/* ========== ANIMATIONS ========== */
+
+/* Floating blobs */
 @keyframes float {
   0%   { transform: translate(0px, 0px) scale(1); }
   25%  { transform: translate(20px, -30px) scale(1.05); }
@@ -154,5 +285,54 @@
   33%  { transform: translate(30px, -20px) scale(1.06); }
   66%  { transform: translate(-20px, 30px) scale(0.96); }
   100% { transform: translate(0px, 0px) scale(1); }
+}
+
+/* Glitch flashes — brief opacity spikes staggered across layers */
+@keyframes glitch-flash-1 {
+  0%, 100%  { opacity: 0; transform: translateX(0); }
+  42%       { opacity: 0; }
+  43%       { opacity: 1; transform: translateX(-2px); }
+  44.5%     { opacity: 1; transform: translateX(1px); }
+  45%       { opacity: 0; transform: translateX(0); }
+  78%       { opacity: 0; }
+  78.5%     { opacity: 0.7; transform: translateX(1px); }
+  79.5%     { opacity: 0; transform: translateX(0); }
+}
+
+@keyframes glitch-flash-2 {
+  0%, 100%  { opacity: 0; transform: translateX(0); }
+  28%       { opacity: 0; }
+  28.5%     { opacity: 0.8; transform: translateX(2px); }
+  30%       { opacity: 0; transform: translateX(0); }
+  63%       { opacity: 0; }
+  63.5%     { opacity: 1; transform: translateX(-1px); }
+  65%       { opacity: 0.5; transform: translateX(1px); }
+  65.5%     { opacity: 0; transform: translateX(0); }
+}
+
+@keyframes glitch-flash-3 {
+  0%, 100%  { opacity: 0; transform: translateY(0); }
+  35%       { opacity: 0; }
+  35.5%     { opacity: 0.6; transform: translateY(-1px); }
+  37%       { opacity: 0; transform: translateY(0); }
+  72%       { opacity: 0; }
+  72.5%     { opacity: 0.9; transform: translateY(1px); }
+  73.5%     { opacity: 0.3; transform: translateY(-1px); }
+  74%       { opacity: 0; transform: translateY(0); }
+}
+
+/* Noise texture drift */
+@keyframes noise-drift {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(-64px, -32px); }
+  50%  { transform: translate(32px, -64px); }
+  75%  { transform: translate(-32px, 64px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Horizontal band drift */
+@keyframes bands-drift {
+  0%   { background-position: 0 0; }
+  100% { background-position: 0 100vh; }
 }
 </style>

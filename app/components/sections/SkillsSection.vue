@@ -69,13 +69,13 @@ const skillCategories: SkillCategory[] = [
         </div>
         <div class="rounded-lg border border-primary/20 bg-card p-4 text-center shadow-sm retro-box-glow">
           <p class="text-2xl sm:text-3xl font-bold text-primary retro-glow">
-            <EffectsCountUp :target="4" :duration="2000" suffix="+" />
+            <EffectsCountUp :target="15" :duration="2000" suffix="+" />
           </p>
           <p class="text-xs sm:text-sm text-muted-foreground font-display">Projects</p>
         </div>
         <div class="rounded-lg border border-primary/20 bg-card p-4 text-center shadow-sm retro-box-glow">
           <p class="text-2xl sm:text-3xl font-bold text-primary retro-glow">
-            <EffectsCountUp :target="3" :duration="2000" suffix="+" />
+            <EffectsCountUp :target="5" :duration="2000" suffix="+" />
           </p>
           <p class="text-xs sm:text-sm text-muted-foreground font-display">Internships</p>
         </div>

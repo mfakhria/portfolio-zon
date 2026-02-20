@@ -7,6 +7,48 @@ function closeMobileMenu() {
   isMobileMenuOpen.value = false
 }
 
+// Hide on scroll down (with glitch), show on scroll up (with glitch)
+type NavState = 'visible' | 'glitch-out' | 'hidden' | 'glitch-in'
+const navState = ref<NavState>('visible')
+let lastScrollY = 0
+let glitchTimer: ReturnType<typeof setTimeout> | null = null
+
+function onScroll() {
+  const currentY = window.scrollY
+  if (currentY < 60) {
+    if (navState.value !== 'visible') triggerGlitchIn()
+  } else if (currentY > lastScrollY + 4) {
+    if (navState.value === 'visible') {
+      isMobileMenuOpen.value = false
+      navState.value = 'glitch-out'
+      glitchTimer = setTimeout(() => {
+        navState.value = 'hidden'
+        glitchTimer = null
+      }, 400)
+    }
+  } else if (currentY < lastScrollY - 4) {
+    if (navState.value === 'hidden' || navState.value === 'glitch-out') {
+      triggerGlitchIn()
+    }
+  }
+  lastScrollY = currentY
+}
+
+function triggerGlitchIn() {
+  if (glitchTimer) { clearTimeout(glitchTimer); glitchTimer = null }
+  navState.value = 'glitch-in'
+  glitchTimer = setTimeout(() => {
+    navState.value = 'visible'
+    glitchTimer = null
+  }, 400)
+}
+
+onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
+onUnmounted(() => {
+  window.removeEventListener('scroll', onScroll)
+  if (glitchTimer) clearTimeout(glitchTimer)
+})
+
 const navLinks = [
   { label: 'About', href: '#about' },
   { label: 'Projects', href: '#projects' },
@@ -16,7 +58,15 @@ const navLinks = [
 </script>
 
 <template>
-  <header class="fixed top-0 left-0 right-0 z-50 pointer-events-none">
+  <header
+    class="fixed top-0 left-0 right-0 z-50 pointer-events-none"
+    :class="{
+      'navbar-visible': navState === 'visible',
+      'navbar-glitch-out': navState === 'glitch-out',
+      'navbar-hidden': navState === 'hidden',
+      'navbar-glitch-in': navState === 'glitch-in',
+    }"
+  >
     <div class="flex items-center justify-center px-4 pt-4">
       <!-- Floating pill navbar -->
       <nav
@@ -76,3 +126,109 @@ const navLinks = [
     </Transition>
   </header>
 </template>
+
+<style scoped>
+.navbar-visible {
+  transform: translateY(0);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.navbar-hidden {
+  transform: translateY(-110%);
+  transition: transform 0.25s ease-in;
+}
+
+.navbar-glitch-out {
+  animation: navbar-glitch-out 0.4s ease-in forwards;
+}
+
+.navbar-glitch-in {
+  animation: navbar-glitch-in 0.4s ease-out forwards;
+}
+
+@keyframes navbar-glitch-in {
+  0% {
+    transform: translateY(-110%) translateX(0);
+    filter: none;
+    opacity: 0;
+  }
+  20% {
+    transform: translateY(-60%) translateX(3px);
+    filter: hue-rotate(90deg) brightness(1.4);
+    opacity: 0.4;
+  }
+  35% {
+    transform: translateY(-20%) translateX(-4px) skewX(-2deg);
+    filter: hue-rotate(-90deg) brightness(1.6);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(4px) translateX(3px) skewX(1.5deg);
+    filter: hue-rotate(180deg) brightness(0.8);
+    opacity: 0.85;
+  }
+  65% {
+    transform: translateY(-3px) translateX(-2px) skewX(-1deg);
+    filter: hue-rotate(45deg) brightness(1.3);
+    opacity: 1;
+  }
+  78% {
+    transform: translateY(2px) translateX(1px) skewX(0.5deg);
+    filter: hue-rotate(-20deg);
+    opacity: 1;
+  }
+  90% {
+    transform: translateY(-1px) translateX(0);
+    filter: none;
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) translateX(0) skewX(0deg);
+    filter: none;
+    opacity: 1;
+  }
+}
+
+@keyframes navbar-glitch-out {
+  0% {
+    transform: translateY(0) translateX(0) skewX(0deg);
+    filter: none;
+    opacity: 1;
+  }
+  10% {
+    transform: translateY(-3px) translateX(-5px) skewX(-2deg);
+    filter: hue-rotate(90deg) brightness(1.5);
+    opacity: 1;
+  }
+  20% {
+    transform: translateY(2px) translateX(4px) skewX(1.5deg);
+    filter: hue-rotate(-90deg) brightness(0.7);
+    opacity: 0.85;
+  }
+  30% {
+    transform: translateY(-1px) translateX(-3px) skewX(-1deg);
+    filter: hue-rotate(180deg) brightness(1.3);
+    opacity: 1;
+  }
+  42% {
+    transform: translateY(0) translateX(2px) skewX(0.5deg);
+    filter: none;
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateY(-5%) translateX(0) skewX(0deg);
+    filter: brightness(1.2);
+    opacity: 0.8;
+  }
+  65% {
+    transform: translateY(-40%) translateX(-2px);
+    filter: hue-rotate(45deg);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-110%) translateX(0);
+    filter: none;
+    opacity: 0;
+  }
+}
+</style>

@@ -18,7 +18,7 @@ import { Separator } from '~/components/ui/separator'
         <EffectsProfileCard class="p-6 sm:p-8">
           <div class="space-y-4">
             <EffectsScrollReveal
-              text="I am a fresh graduate of the Computer Engineering Technology Program at IPB Vocational School with a strong interest in Backend Development, IT systems, and web technologies. I have experience in backend system development, API design, database management, and IoT-based solutions."
+              text="> I am a fresh graduate of the Computer Engineering Technology Program at IPB Vocational School with a strong interest in Backend Development, IT systems, and web technologies. I have experience in backend system development, API design, database management, and IoT-based solutions."
               class="text-base sm:text-lg leading-relaxed text-muted-foreground"
             />
             <EffectsScrollReveal

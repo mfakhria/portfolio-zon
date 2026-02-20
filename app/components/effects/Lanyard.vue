@@ -14,9 +14,9 @@ const props = withDefaults(defineProps<Props>(), {
   badgeImage: '',
   title: 'Full Stack',
   subtitle: 'Web Development',
-  strapColor: '#1a1a2e',
-  badgeBg: '#1a1a3e',
-  accentColor: '#6366f1',
+  strapColor: '#00ff41',
+  badgeBg: '#0a1a0f',
+  accentColor: '#00ff41',
 })
 
 // Canvas and DOM refs
@@ -88,15 +88,15 @@ function simulate() {
 
   // If dragging, move the dragged point
   if (dragging && dragIndex >= 0) {
-    points[dragIndex].x = mouseX
-    points[dragIndex].y = mouseY
+    points[dragIndex]!.x = mouseX
+    points[dragIndex]!.y = mouseY
   }
 
   // Solve constraints
   for (let iter = 0; iter < ITERATIONS; iter++) {
     for (let i = 0; i < SEGMENTS; i++) {
-      const a = points[i]
-      const b = points[i + 1]
+      const a = points[i]!
+      const b = points[i + 1]!
       const dx = b.x - a.x
       const dy = b.y - a.y
       const dist = Math.sqrt(dx * dx + dy * dy)
@@ -114,8 +114,8 @@ function simulate() {
       }
     }
     // Pin first point
-    points[0].x = canvasWidth / 2
-    points[0].y = 0
+    points[0]!.x = canvasWidth / 2
+    points[0]!.y = 0
   }
 
   // Keep within horizontal bounds
@@ -138,41 +138,57 @@ function render() {
   // Draw strap/lanyard
   if (points.length < 2) return
 
-  // Strap shadow
+  // Outer glow pass
   ctx.save()
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.3)'
-  ctx.shadowBlur = 8
-  ctx.shadowOffsetX = 2
-  ctx.shadowOffsetY = 2
-
-  // Draw strap as a thick path with texture lines
   ctx.beginPath()
-  ctx.moveTo(points[0].x, points[0].y)
+  ctx.moveTo(points[0]!.x, points[0]!.y)
   for (let i = 1; i < points.length; i++) {
-    ctx.lineTo(points[i].x, points[i].y)
+    ctx.lineTo(points[i]!.x, points[i]!.y)
   }
-  ctx.strokeStyle = props.strapColor
-  ctx.lineWidth = 12
+  ctx.shadowColor = 'rgba(0, 255, 65, 0.7)'
+  ctx.shadowBlur = 18
+  ctx.strokeStyle = 'rgba(0, 255, 65, 0.35)'
+  ctx.lineWidth = 20
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
   ctx.stroke()
   ctx.restore()
 
-  // Strap highlight (center line)
+  // Strap shadow
+  ctx.save()
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'
+  ctx.shadowBlur = 10
+  ctx.shadowOffsetX = 2
+  ctx.shadowOffsetY = 3
+
+  // Draw strap as a thick path with texture lines
   ctx.beginPath()
-  ctx.moveTo(points[0].x, points[0].y)
+  ctx.moveTo(points[0]!.x, points[0]!.y)
   for (let i = 1; i < points.length; i++) {
-    ctx.lineTo(points[i].x, points[i].y)
+    ctx.lineTo(points[i]!.x, points[i]!.y)
   }
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'
-  ctx.lineWidth = 4
+  ctx.strokeStyle = props.strapColor
+  ctx.lineWidth = 10
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.stroke()
+  ctx.restore()
+
+  // Strap inner highlight
+  ctx.beginPath()
+  ctx.moveTo(points[0]!.x, points[0]!.y)
+  for (let i = 1; i < points.length; i++) {
+    ctx.lineTo(points[i]!.x, points[i]!.y)
+  }
+  ctx.strokeStyle = 'rgba(180, 255, 200, 0.35)'
+  ctx.lineWidth = 3
   ctx.lineCap = 'round'
   ctx.stroke()
 
   // Strap text pattern
   for (let i = 2; i < points.length - 1; i += 3) {
-    const p = points[i]
-    const prev = points[i - 1]
+    const p = points[i]!
+    const prev = points[i - 1]!
     const angle = Math.atan2(p.y - prev.y, p.x - prev.x)
     ctx.save()
     ctx.translate(p.x, p.y)
@@ -186,8 +202,8 @@ function render() {
   }
 
   // Draw clip/connector at the end
-  const last = points[points.length - 1]
-  const secondLast = points[points.length - 2]
+  const last = points[points.length - 1]!
+  const secondLast = points[points.length - 2]!
   const clipAngle = Math.atan2(last.y - secondLast.y, last.x - secondLast.x)
 
   ctx.save()
@@ -196,17 +212,19 @@ function render() {
 
   // Metal clip
   ctx.beginPath()
-  ctx.arc(0, 0, 6, 0, Math.PI * 2)
-  ctx.fillStyle = '#555'
+  ctx.arc(0, 0, 7, 0, Math.PI * 2)
+  ctx.fillStyle = '#00cc33'
   ctx.fill()
-  ctx.strokeStyle = '#777'
-  ctx.lineWidth = 1.5
+  ctx.strokeStyle = '#00ff41'
+  ctx.lineWidth = 2
+  ctx.shadowColor = 'rgba(0,255,65,0.8)'
+  ctx.shadowBlur = 10
   ctx.stroke()
 
   // Inner hole
   ctx.beginPath()
-  ctx.arc(0, 0, 2.5, 0, Math.PI * 2)
-  ctx.fillStyle = '#333'
+  ctx.arc(0, 0, 3, 0, Math.PI * 2)
+  ctx.fillStyle = '#050a05'
   ctx.fill()
   ctx.restore()
 
@@ -236,8 +254,8 @@ function findClosestPoint(x: number, y: number): number {
   let minDist = Infinity
   let idx = -1
   for (let i = 0; i < points.length; i++) {
-    const dx = points[i].x - x
-    const dy = points[i].y - y
+    const dx = points[i]!.x - x
+    const dy = points[i]!.y - y
     const dist = dx * dx + dy * dy
     if (dist < minDist) {
       minDist = dist
@@ -264,7 +282,7 @@ function onPointerDown(e: MouseEvent) {
   }
 
   const idx = findClosestPoint(pos.x, pos.y)
-  if (idx >= 0 && !points[idx].pinned) {
+  if (idx >= 0 && !points[idx]!.pinned) {
     dragIndex = idx
     dragging = true
   }
@@ -284,7 +302,7 @@ function onPointerUp() {
 
 function onTouchStart(e: TouchEvent) {
   if (e.touches.length === 0) return
-  const pos = getCanvasPos(e.touches[0])
+  const pos = getCanvasPos(e.touches[0]!)
   mouseX = pos.x
   mouseY = pos.y
 
@@ -298,7 +316,7 @@ function onTouchStart(e: TouchEvent) {
   }
 
   const idx = findClosestPoint(pos.x, pos.y)
-  if (idx >= 0 && !points[idx].pinned) {
+  if (idx >= 0 && !points[idx]!.pinned) {
     dragIndex = idx
     dragging = true
     e.preventDefault()
@@ -308,7 +326,7 @@ function onTouchStart(e: TouchEvent) {
 function onTouchMove(e: TouchEvent) {
   if (!dragging || e.touches.length === 0) return
   e.preventDefault()
-  const pos = getCanvasPos(e.touches[0])
+  const pos = getCanvasPos(e.touches[0]!)
   mouseX = pos.x
   mouseY = pos.y
 }
@@ -327,8 +345,8 @@ function handleResize() {
   canvasRef.value.height = canvasHeight
   // Re-pin the anchor
   if (points.length > 0) {
-    points[0].x = canvasWidth / 2
-    points[0].oldX = canvasWidth / 2
+    points[0]!.x = canvasWidth / 2
+    points[0]!.oldX = canvasWidth / 2
   }
 }
 
@@ -434,36 +452,40 @@ onUnmounted(() => {
   pointer-events: none;
   transform-origin: top center;
   z-index: 2;
-  filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.5));
+  filter:
+    drop-shadow(0 0 12px rgba(0, 255, 65, 0.6))
+    drop-shadow(0 0 28px rgba(0, 255, 65, 0.3))
+    drop-shadow(0 16px 40px rgba(0, 0, 0, 0.7));
 }
 
 .badge-inner {
-  width: 200px;
+  width: 280px;
   background: v-bind('props.badgeBg');
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  border: 1.5px solid rgba(0, 255, 65, 0.35);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 16px 18px;
-  gap: 12px;
+  padding: 28px 22px 24px;
+  gap: 16px;
   box-shadow:
-    0 0 40px rgba(99, 102, 241, 0.12),
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    0 0 0 1px rgba(0, 255, 65, 0.08),
+    0 0 30px rgba(0, 255, 65, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(0, 255, 65, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
 }
 
 .badge-photo {
-  width: 120px;
-  height: 140px;
-  border-radius: 12px;
+  width: 200px;
+  height: 230px;
+  border-radius: 14px;
   overflow: hidden;
-  background: rgba(99, 102, 241, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 255, 65, 0.05);
+  border: 1px solid rgba(0, 255, 65, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -491,19 +513,21 @@ onUnmounted(() => {
 }
 
 .badge-title {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
-  color: white;
+  color: #050a05;
   background: v-bind('props.accentColor');
-  padding: 5px 16px;
+  padding: 7px 22px;
   border-radius: 8px;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.08em;
   text-align: center;
   white-space: nowrap;
+  text-shadow: 0 0 8px rgba(0,0,0,0.4);
+  box-shadow: 0 0 16px rgba(0, 255, 65, 0.4);
 }
 
 .badge-subtitle {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.8);
   letter-spacing: 0.01em;
@@ -515,24 +539,24 @@ onUnmounted(() => {
 /* Responsive badge size */
 @media (min-width: 640px) {
   .badge-inner {
-    width: 230px;
-    padding: 24px 18px 20px;
-    gap: 14px;
+    width: 320px;
+    padding: 32px 26px 28px;
+    gap: 18px;
   }
 
   .badge-photo {
-    width: 140px;
-    height: 160px;
-    border-radius: 14px;
+    width: 240px;
+    height: 275px;
+    border-radius: 16px;
   }
 
   .badge-title {
-    font-size: 14px;
-    padding: 6px 20px;
+    font-size: 16px;
+    padding: 8px 26px;
   }
 
   .badge-subtitle {
-    font-size: 13px;
+    font-size: 15px;
   }
 }
 </style>
