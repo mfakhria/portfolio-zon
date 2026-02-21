@@ -1,5 +1,3 @@
-const API_BASE = 'http://localhost:3001/api';
-
 interface FetchOptions {
   method?: string;
   body?: any;
@@ -7,6 +5,8 @@ interface FetchOptions {
 }
 
 export function useApi() {
+  const config = useRuntimeConfig()
+  const API_BASE = config.public.apiBase as string
   const token = useCookie('admin_token');
 
   async function request<T = any>(endpoint: string, opts: FetchOptions = {}): Promise<T> {

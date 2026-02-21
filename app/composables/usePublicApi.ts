@@ -1,5 +1,3 @@
-const API_BASE = 'http://localhost:3001/api'
-
 interface ApiSkill {
   id: number
   name: string
@@ -42,6 +40,9 @@ interface ApiExperience {
 export type { ApiSkillCategory, ApiSkill, ApiProject, ApiExperience }
 
 export function usePublicApi() {
+  const config = useRuntimeConfig()
+  const API_BASE = config.public.apiBase as string
+
   const fetchSkills = () =>
     $fetch<ApiSkillCategory[]>(`${API_BASE}/skills`)
 
