@@ -6,6 +6,8 @@ export default defineConfig({
   migrations: {
     path: 'prisma/migrations',
   },
-  // datasource.url diambil dari DATABASE_URL di environment (schema.prisma)
-  // DIRECT_URL hanya dipakai saat prisma migrate secara manual (local dev)
+  datasource: {
+    // DIRECT_URL untuk prisma migrate, fallback ke DATABASE_URL
+    url: process.env.DIRECT_URL || process.env.DATABASE_URL || '',
+  },
 });
