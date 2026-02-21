@@ -1,6 +1,6 @@
 <script setup lang="ts">
 useHead({
-  title: 'Muhammad Fakhri Alauddin — Backend Developer',
+  title: 'Portfolio Zon',
   meta: [
     { name: 'description', content: 'Fresh graduate with experience in backend development, API design, database management, and IoT-based solutions.' },
   ],
