@@ -271,14 +271,17 @@ function onPointerDown(e: MouseEvent) {
   mouseX = pos.x
   mouseY = pos.y
 
-  // Also check proximity to badge
-  const badgeDx = pos.x - badgeX.value
-  const badgeDy = pos.y - badgeY.value
-  const badgeDist = badgeDx * badgeDx + badgeDy * badgeDy
-  if (badgeDist < 80 * 80) {
-    dragIndex = points.length - 1
-    dragging = true
-    return
+  // Check if click is within the visible badge card bounds
+  if (badgeRef.value) {
+    const badgeRect = badgeRef.value.getBoundingClientRect()
+    if (
+      e.clientX >= badgeRect.left && e.clientX <= badgeRect.right &&
+      e.clientY >= badgeRect.top  && e.clientY <= badgeRect.bottom
+    ) {
+      dragIndex = points.length - 1
+      dragging = true
+      return
+    }
   }
 
   const idx = findClosestPoint(pos.x, pos.y)
@@ -302,17 +305,23 @@ function onPointerUp() {
 
 function onTouchStart(e: TouchEvent) {
   if (e.touches.length === 0) return
-  const pos = getCanvasPos(e.touches[0]!)
+  const touch = e.touches[0]!
+  const pos = getCanvasPos(touch)
   mouseX = pos.x
   mouseY = pos.y
 
-  const badgeDx = pos.x - badgeX.value
-  const badgeDy = pos.y - badgeY.value
-  if (badgeDx * badgeDx + badgeDy * badgeDy < 80 * 80) {
-    dragIndex = points.length - 1
-    dragging = true
-    e.preventDefault()
-    return
+  // Check if touch is within the visible badge card bounds
+  if (badgeRef.value) {
+    const badgeRect = badgeRef.value.getBoundingClientRect()
+    if (
+      touch.clientX >= badgeRect.left && touch.clientX <= badgeRect.right &&
+      touch.clientY >= badgeRect.top  && touch.clientY <= badgeRect.bottom
+    ) {
+      dragIndex = points.length - 1
+      dragging = true
+      e.preventDefault()
+      return
+    }
   }
 
   const idx = findClosestPoint(pos.x, pos.y)

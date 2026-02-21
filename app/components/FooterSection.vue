@@ -26,8 +26,30 @@ const dockItems = [
         </p>
         <p class="text-xs text-muted-foreground font-mono">
           &copy; {{ new Date().getFullYear() }} Muhammad Fakhri Alauddin. All rights reserved.
+          <NuxtLink
+            to="/admin"
+            class="secret-link"
+            aria-label="admin"
+            tabindex="-1"
+          >_</NuxtLink>
         </p>
       </div>
     </div>
   </footer>
 </template>
+
+<style scoped>
+.secret-link {
+  opacity: 0.50;
+  color: inherit;
+  text-decoration: none;
+  cursor: default;
+  user-select: none;
+  transition: opacity 0.4s ease;
+  margin-left: 2px;
+}
+.secret-link:hover {
+  opacity: 0.25;
+  cursor: pointer;
+}
+</style>

@@ -67,7 +67,7 @@ async function handleLogin() {
               id="email"
               v-model="form.email"
               type="email"
-              placeholder="admin@portfolio.com"
+              placeholder="email"
               required
             />
           </div>
