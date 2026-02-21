@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: portfolio_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 170503mei
+      POSTGRES_DB: portfolio
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: portfolio_api
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://postgres:170503mei@postgres:5432/portfolio?schema=public
+      JWT_SECRET: portfolio-admin-jwt-secret-key-2026
+      JWT_EXPIRES_IN: 1d
+      ADMIN_EMAIL: admin@portfolio.com
+      ADMIN_PASSWORD: admin123
+      PORT: 3001
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "npx prisma migrate deploy && node dist/prisma/seed.js ; node dist/main.js"
+
+volumes:
+  postgres_data:

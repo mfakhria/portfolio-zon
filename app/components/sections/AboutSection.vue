@@ -1,6 +1,24 @@
 <script setup lang="ts">
 import { Code2, GraduationCap, Briefcase } from 'lucide-vue-next'
 import { Separator } from '~/components/ui/separator'
+import type { ApiExperience } from '~/composables/usePublicApi'
+
+const { fetchExperiences } = usePublicApi()
+
+const internships = ref<ApiExperience[]>([])
+const education = ref<ApiExperience | null>(null)
+const certifications = ref<ApiExperience[]>([])
+
+onMounted(async () => {
+  try {
+    const experiences = await fetchExperiences()
+    internships.value = experiences.filter(e => e.type === 'INTERNSHIP')
+    education.value = experiences.find(e => e.type === 'EDUCATION') || null
+    certifications.value = experiences.filter(e => e.type === 'CERTIFICATION')
+  } catch (e) {
+    console.error('Failed to fetch experiences:', e)
+  }
+})
 </script>
 
 <template>
@@ -34,19 +52,19 @@ import { Separator } from '~/components/ui/separator'
             <EffectsGlassIcon :icon="Code2" :size="48" color="rgba(59, 130, 246, 0.1)" />
             <div>
               <h3 class="font-semibold">
-                <EffectsCountUp :target="3" :duration="2000" suffix="+ Internship Experiences" />
+                <EffectsCountUp :target="internships.length" :duration="2000" suffix="+ Internship Experiences" />
               </h3>
-              <p class="text-sm text-muted-foreground">AirNav Indonesia, DKP3 Sukabumi, Joglo Kebun Wangi</p>
+              <p class="text-sm text-muted-foreground">{{ internships.map(i => i.company).join(', ') }}</p>
             </div>
           </div>
 
           <Separator />
 
-          <div class="flex items-start gap-4">
+          <div v-if="education" class="flex items-start gap-4">
             <EffectsGlassIcon :icon="GraduationCap" :size="48" color="rgba(139, 92, 246, 0.1)" />
             <div>
-              <h3 class="font-semibold">Computer Engineering Technology</h3>
-              <p class="text-sm text-muted-foreground">Institut Pertanian Bogor — GPA 3.48/4.00</p>
+              <h3 class="font-semibold">{{ education.title }}</h3>
+              <p class="text-sm text-muted-foreground">{{ education.company }} — {{ education.description }}</p>
             </div>
           </div>
 
@@ -56,7 +74,7 @@ import { Separator } from '~/components/ui/separator'
             <EffectsGlassIcon :icon="Briefcase" :size="48" color="rgba(16, 185, 129, 0.1)" />
             <div>
               <h3 class="font-semibold">BNSP Certified</h3>
-              <p class="text-sm text-muted-foreground">Software Engineering & Hardware Installation Supervisor</p>
+              <p class="text-sm text-muted-foreground">{{ certifications.map(c => c.title).join(' & ') }}</p>
             </div>
           </div>
         </div>

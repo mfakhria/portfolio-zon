@@ -5,19 +5,36 @@ import { Input } from '~/components/ui/input'
 import { Textarea } from '~/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 
+const { sendContactMessage } = usePublicApi()
+
 const form = reactive({
   name: '',
   email: '',
   message: '',
 })
 
-function handleSubmit() {
-  // TODO: Integrate with NestJS backend
-  console.log('Form submitted:', form)
-  alert('Thank you for your message! I will get back to you soon.')
-  form.name = ''
-  form.email = ''
-  form.message = ''
+const sending = ref(false)
+const statusMessage = ref('')
+const statusType = ref<'success' | 'error' | ''>('')
+
+async function handleSubmit() {
+  sending.value = true
+  statusMessage.value = ''
+  statusType.value = ''
+  try {
+    await sendContactMessage({ ...form })
+    statusMessage.value = 'Thank you for your message! I will get back to you soon.'
+    statusType.value = 'success'
+    form.name = ''
+    form.email = ''
+    form.message = ''
+  } catch (e: any) {
+    console.error('Failed to send message:', e)
+    statusMessage.value = 'Failed to send message. Please try again later.'
+    statusType.value = 'error'
+  } finally {
+    sending.value = false
+  }
 }
 </script>
 
@@ -81,9 +98,12 @@ function handleSubmit() {
                 <label for="message" class="text-sm font-medium leading-none">Message</label>
                 <Textarea id="message" v-model="form.message" placeholder="Your message..." class="min-h-30" required />
               </div>
-              <Button type="submit" class="w-full">
+              <p v-if="statusMessage" :class="['text-sm', statusType === 'success' ? 'text-green-400' : 'text-red-400']">
+                {{ statusMessage }}
+              </p>
+              <Button type="submit" class="w-full" :disabled="sending">
                 <Send class="mr-2 h-4 w-4" />
-                Send Message
+                {{ sending ? 'Sending...' : 'Send Message' }}
               </Button>
             </form>
           </CardContent>
