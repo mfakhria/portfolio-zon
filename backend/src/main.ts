@@ -10,7 +10,12 @@ async function bootstrap() {
 
   // Enable CORS for the Nuxt frontend
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      /\.vercel\.app$/,   // semua subdomain vercel
+      process.env.FRONTEND_URL || '',
+    ].filter(Boolean),
     credentials: true,
   });
 
