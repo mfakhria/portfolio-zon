@@ -17,10 +17,12 @@ const props = withDefaults(defineProps<Props>(), {
 <template>
   <div
     :class="props.class"
-    class="glass-icon group relative inline-flex items-center justify-center rounded-2xl border border-white/20 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary/10"
+    class="glass-icon group relative inline-flex shrink-0 items-center justify-center rounded-2xl border border-white/20 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary/10"
     :style="{
       width: `${size + 24}px`,
       height: `${size + 24}px`,
+      minWidth: `${size + 24}px`,
+      minHeight: `${size + 24}px`,
       background: color,
     }"
   >
