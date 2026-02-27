@@ -49,6 +49,7 @@ function formatTime(dateStr: string) {
   return new Date(dateStr).toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'Asia/Jakarta',
   })
 }
 
@@ -56,6 +57,7 @@ function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
+    timeZone: 'Asia/Jakarta',
   })
 }
 
