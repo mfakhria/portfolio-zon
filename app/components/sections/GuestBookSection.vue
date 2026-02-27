@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Send, MessageCircle, Reply, Users, ChevronUp } from 'lucide-vue-next'
+import { Send, MessageCircle, Reply, ChevronUp } from 'lucide-vue-next'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Textarea } from '~/components/ui/textarea'
@@ -7,7 +7,7 @@ import { Card, CardContent } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
 import type { GuestMessage } from '~/composables/useChat'
 
-const { messages, onlineCount, connected, error, connect, disconnect, sendMessage } = useChat()
+const { messages, connected, error, connect, disconnect, sendMessage } = useChat()
 
 const form = reactive({
   name: '',
@@ -119,13 +119,9 @@ watch(
                 />
               </span>
               <span class="text-xs text-muted-foreground">
-                {{ connected ? 'Connected' : 'Disconnected' }}
+                {{ connected ? 'Connected' : 'Connecting...' }}
               </span>
             </div>
-            <Badge variant="outline" class="text-xs gap-1">
-              <Users class="h-3 w-3" />
-              {{ onlineCount }}
-            </Badge>
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import { io, Socket } from 'socket.io-client'
+import * as Ably from 'ably'
 
 export interface GuestMessage {
   id: number
@@ -12,102 +12,154 @@ export interface GuestMessage {
 
 export function useChat() {
   const config = useRuntimeConfig()
-  // Derive WS base from API base (strip /api suffix)
   const apiBase = config.public.apiBase as string
-  const wsBase = apiBase.replace(/\/api$/, '')
+  const ablyKey = config.public.ablyKey as string
 
-  const socket = ref<Socket | null>(null)
   const messages = ref<GuestMessage[]>([])
-  const onlineCount = ref(0)
   const connected = ref(false)
   const error = ref('')
 
-  function connect() {
-    if (socket.value?.connected) return
+  let ably: Ably.Realtime | null = null
+  let channel: Ably.RealtimeChannel | null = null
 
-    const s = io(`${wsBase}/chat`, {
-      transports: ['websocket', 'polling'],
-      withCredentials: true,
-    })
+  async function fetchMessages(cursor?: number) {
+    const query = cursor ? `?cursor=${cursor}` : ''
+    const data = await $fetch<GuestMessage[]>(`${apiBase}/chat${query}`)
+    return data
+  }
 
-    s.on('connect', () => {
-      connected.value = true
-      error.value = ''
-      // Load initial messages
-      s.emit('load_messages', {})
-    })
+  async function connect() {
+    if (connected.value) return
 
-    s.on('disconnect', () => {
-      connected.value = false
-    })
-
-    s.on('messages_loaded', (data: GuestMessage[]) => {
-      // Messages come in desc order, reverse for chronological display
+    // Load initial messages via REST
+    try {
+      const data = await fetchMessages()
       messages.value = data.reverse()
-    })
+    } catch (e) {
+      console.error('Failed to load messages:', e)
+    }
 
-    s.on('new_message', (msg: GuestMessage) => {
-      // If it's a reply, attach to parent
-      if (msg.replyToId) {
-        const parent = messages.value.find((m) => m.id === msg.replyToId)
-        if (parent) {
-          if (!parent.replies) parent.replies = []
-          parent.replies.push(msg)
-          return
+    // Subscribe to real-time updates via Ably
+    if (!ablyKey) {
+      console.warn('Ably key not set — real-time disabled')
+      connected.value = true
+      return
+    }
+
+    try {
+      ably = new Ably.Realtime({ key: ablyKey })
+      channel = ably.channels.get('guestbook')
+
+      channel!.subscribe('new_message', (msg) => {
+        const data = msg.data as GuestMessage
+        // If it's a reply, attach to parent
+        if (data.replyToId) {
+          const parent = messages.value.find((m) => m.id === data.replyToId)
+          if (parent) {
+            if (!parent.replies) parent.replies = []
+            // Avoid duplicates
+            if (!parent.replies.some((r) => r.id === data.id)) {
+              parent.replies.push(data)
+            }
+            return
+          }
         }
-      }
-      messages.value.push(msg)
-    })
+        // Avoid duplicates
+        if (!messages.value.some((m) => m.id === data.id)) {
+          messages.value.push(data)
+        }
+      })
 
-    s.on('message_deleted', (data: { id: number }) => {
-      messages.value = messages.value.filter((m) => m.id !== data.id)
-    })
+      channel!.subscribe('message_deleted', (msg) => {
+        const { id } = msg.data as { id: number }
+        // Remove from top-level
+        messages.value = messages.value.filter((m) => m.id !== id)
+        // Remove from replies
+        for (const m of messages.value) {
+          if (m.replies) {
+            m.replies = m.replies.filter((r) => r.id !== id)
+          }
+        }
+      })
 
-    s.on('online_count', (count: number) => {
-      onlineCount.value = count
-    })
+      ably.connection.on('connected', () => {
+        connected.value = true
+        error.value = ''
+      })
 
-    s.on('error_message', (data: { message: string }) => {
-      error.value = data.message
-    })
+      ably.connection.on('disconnected', () => {
+        connected.value = false
+      })
 
-    socket.value = s
+      ably.connection.on('failed', () => {
+        connected.value = false
+        error.value = 'Connection failed'
+      })
+
+      // Wait for connection
+      await ably.connection.once('connected')
+      connected.value = true
+    } catch (e) {
+      console.error('Ably connection error:', e)
+      connected.value = true // still show messages from REST
+    }
   }
 
   function disconnect() {
-    socket.value?.disconnect()
-    socket.value = null
+    channel?.unsubscribe()
+    ably?.close()
+    ably = null
+    channel = null
     connected.value = false
   }
 
-  function sendMessage(name: string, content: string, replyToId?: number) {
-    if (!socket.value?.connected) return
+  async function sendMessage(name: string, content: string, replyToId?: number) {
     error.value = ''
-    socket.value.emit('send_message', { name, content, replyToId })
+    try {
+      await $fetch(`${apiBase}/chat`, {
+        method: 'POST',
+        body: { name, content, replyToId },
+      })
+    } catch (e: any) {
+      error.value = e?.data?.message || 'Failed to send message'
+    }
   }
 
-  function adminReply(content: string, replyToId: number, token: string) {
-    if (!socket.value?.connected) return
+  async function adminReply(content: string, replyToId: number, token: string) {
     error.value = ''
-    socket.value.emit('admin_reply', { content, replyToId, token })
+    try {
+      await $fetch(`${apiBase}/chat/reply`, {
+        method: 'POST',
+        body: { name: 'Admin', content, replyToId },
+        headers: { Authorization: `Bearer ${token}` },
+      })
+    } catch (e: any) {
+      error.value = e?.data?.message || 'Failed to send reply'
+    }
   }
 
-  function adminDelete(id: number, token: string) {
-    if (!socket.value?.connected) return
-    socket.value.emit('admin_delete', { id, token })
+  async function adminDelete(id: number, token: string) {
+    try {
+      await $fetch(`${apiBase}/chat/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+    } catch (e: any) {
+      error.value = e?.data?.message || 'Failed to delete message'
+    }
   }
 
-  function loadMore() {
-    if (!socket.value?.connected || messages.value.length === 0) return
+  async function loadMore() {
+    if (messages.value.length === 0) return
     const oldest = messages.value[0]
     if (oldest) {
-      socket.value.emit('load_messages', { cursor: oldest.id })
+      const older = await fetchMessages(oldest.id)
+      messages.value = [...older.reverse(), ...messages.value]
     }
   }
 
   return {
     messages,
-    onlineCount,
     connected,
     error,
     connect,

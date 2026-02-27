@@ -31,6 +31,7 @@ services:
       JWT_EXPIRES_IN: 1d
       ADMIN_EMAIL: admin@portfolio.com
       ADMIN_PASSWORD: admin123
+      ABLY_API_KEY: iRYcZQ.yhpURQ:JNa6P30sjrgcfAam5QNiNP3imA4apc-WEwpdhY5kDVM
       PORT: 3001
     depends_on:
       postgres:

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Trash2, Reply, Send, ArrowLeft, MessageCircle, Users } from 'lucide-vue-next'
+import { Trash2, Reply, Send, ArrowLeft, MessageCircle } from 'lucide-vue-next'
 import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
 import { Input } from '~/components/ui/input'
@@ -11,7 +11,7 @@ definePageMeta({
   middleware: 'auth',
 })
 
-const { messages, onlineCount, connected, error, connect, disconnect, adminReply, adminDelete } = useChat()
+const { messages, connected, error, connect, disconnect, adminReply, adminDelete } = useChat()
 const token = useCookie('admin_token')
 
 const replyingTo = ref<GuestMessage | null>(null)
@@ -75,10 +75,6 @@ onUnmounted(disconnect)
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <h1 class="text-2xl font-bold font-retro text-primary retro-glow">Guest Book</h1>
-          <Badge variant="outline" class="text-xs gap-1">
-            <Users class="h-3 w-3" />
-            {{ onlineCount }} online
-          </Badge>
           <div class="flex items-center gap-1.5">
             <span class="relative flex h-2 w-2">
               <span
