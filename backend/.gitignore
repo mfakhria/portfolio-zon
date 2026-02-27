@@ -1,3 +1,8 @@
 node_modules
 dist
 .env
+
+# Compiled prisma config artifacts
+prisma.config.js
+prisma.config.d.ts
+prisma.config.js.map
