@@ -23,6 +23,7 @@ useHead({
           <SectionsAboutSection />
           <SectionsProjectsSection />
           <SectionsSkillsSection />
+          <SectionsGuestBookSection />
           <SectionsContactSection />
         </main>
       </EffectsScrollGlitch>

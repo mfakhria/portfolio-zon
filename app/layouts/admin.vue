@@ -5,6 +5,7 @@ import {
   Cpu,
   Briefcase,
   Mail,
+  MessageCircle,
   LogOut,
   Home,
   Menu,
@@ -22,6 +23,7 @@ const navItems = [
   { label: 'Skills', icon: Cpu, to: '/admin/skills' },
   { label: 'Experience', icon: Briefcase, to: '/admin/experiences' },
   { label: 'Messages', icon: Mail, to: '/admin/contacts' },
+  { label: 'Guest Book', icon: MessageCircle, to: '/admin/guestbook' },
 ]
 
 function isActive(path: string) {

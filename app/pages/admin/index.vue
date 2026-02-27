@@ -4,6 +4,7 @@ import {
   Cpu,
   Briefcase,
   Mail,
+  MessageCircle,
   ArrowRight,
   Activity,
   TrendingUp,
@@ -27,15 +28,17 @@ const stats = reactive({
   experiences: 0,
   messages: 0,
   unread: 0,
+  guestMessages: 0,
 })
 
 onMounted(async () => {
   try {
-    const [projects, skills, experiences, contacts] = await Promise.all([
+    const [projects, skills, experiences, contacts, guestCount] = await Promise.all([
       api.get<any[]>('/projects'),
       api.get<any[]>('/skills'),
       api.get<any[]>('/experiences'),
       api.get<any[]>('/contacts'),
+      api.get<number>('/chat/count'),
     ])
     stats.projects = projects.length
     stats.skillCategories = skills.length
@@ -43,6 +46,7 @@ onMounted(async () => {
     stats.experiences = experiences.length
     stats.messages = contacts.length
     stats.unread = contacts.filter((m: any) => !m.read).length
+    stats.guestMessages = guestCount
   } catch (e) {
     console.error('Failed to fetch stats', e)
   } finally {
@@ -95,6 +99,17 @@ const statCards = computed(() => [
     glowColor: 'hover:shadow-[0_0_15px_rgba(168,85,247,0.15)]',
     description: stats.unread > 0 ? `${stats.unread} unread` : 'all read',
   },
+  {
+    label: 'Guest Book',
+    value: stats.guestMessages,
+    icon: MessageCircle,
+    to: '/admin/guestbook',
+    gradient: 'from-pink-500/20 to-rose-500/10',
+    iconColor: 'text-pink-400',
+    borderColor: 'border-pink-500/30 hover:border-pink-400/60',
+    glowColor: 'hover:shadow-[0_0_15px_rgba(236,72,153,0.15)]',
+    description: 'live chat messages',
+  },
 ])
 
 const quickActions = computed(() => [
@@ -102,6 +117,7 @@ const quickActions = computed(() => [
   { label: 'Manage Skills', icon: Cpu, to: '/admin/skills', color: 'text-emerald-400' },
   { label: 'Manage Experiences', icon: Briefcase, to: '/admin/experiences', color: 'text-amber-400' },
   { label: 'View Messages', icon: Mail, to: '/admin/contacts', color: 'text-purple-400' },
+  { label: 'Guest Book', icon: MessageCircle, to: '/admin/guestbook', color: 'text-pink-400' },
 ])
 </script>
 
