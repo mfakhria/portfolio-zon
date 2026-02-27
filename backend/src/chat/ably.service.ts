@@ -1,9 +1,9 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import Ably from 'ably';
+import * as Ably from 'ably';
 
 @Injectable()
 export class AblyService implements OnModuleInit {
-  private ably: Ably;
+  private ably: Ably.Rest;
 
   onModuleInit() {
     const apiKey = process.env.ABLY_API_KEY;
@@ -11,7 +11,7 @@ export class AblyService implements OnModuleInit {
       console.warn('⚠️  ABLY_API_KEY not set — real-time features disabled');
       return;
     }
-    this.ably = new Ably({ key: apiKey });
+    this.ably = new Ably.Rest({ key: apiKey });
   }
 
   async publish(channel: string, event: string, data: any) {
