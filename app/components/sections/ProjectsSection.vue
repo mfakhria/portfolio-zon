@@ -524,30 +524,38 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter:
-    grayscale(20%)
-    sepia(30%)
-    hue-rotate(80deg)
-    saturate(140%)
-    brightness(0.75)
-    contrast(1.1);
-  transition: filter 0.5s ease;
-  will-change: filter;
   transform: translateZ(0);
 }
 
-.visual-collage:hover .project-img {
-  filter:
-    grayscale(5%)
-    sepia(10%)
-    hue-rotate(80deg)
-    saturate(110%)
-    brightness(0.9)
-    contrast(1.05);
+/* Subtle glitch on hover — RGB channel split */
+.visual-collage:hover .frame-desktop__screen,
+.visual-collage:hover .frame-mobile__screen {
+  animation: img-glitch 0.3s steps(2, end) 1;
+}
+
+@keyframes img-glitch {
+  0%   { clip-path: inset(0); filter: none; }
+  20%  { clip-path: inset(8% 0 85% 0); filter: drop-shadow(3px 0 hsl(120 100% 65% / 0.4)) drop-shadow(-3px 0 hsl(0 100% 50% / 0.3)); }
+  40%  { clip-path: inset(60% 0 10% 0); filter: drop-shadow(-2px 0 hsl(200 100% 60% / 0.35)) drop-shadow(2px 0 hsl(120 100% 65% / 0.3)); }
+  60%  { clip-path: inset(30% 0 40% 0); filter: drop-shadow(2px 0 hsl(120 100% 65% / 0.3)); }
+  80%  { clip-path: inset(0); filter: none; }
+  100% { clip-path: inset(0); filter: none; }
 }
 
 .project-img--mobile {
   object-position: top center;
+}
+
+/* Persistent subtle scanline-flicker on hover */
+.visual-collage:hover .frame-scanlines {
+  animation: scanline-flicker 2s steps(4) infinite;
+}
+
+@keyframes scanline-flicker {
+  0%, 100% { opacity: 1; }
+  25%      { opacity: 0.6; }
+  50%      { opacity: 0.9; }
+  75%      { opacity: 0.5; }
 }
 
 /* Scanline overlay */
