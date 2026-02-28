@@ -1,11 +1,109 @@
 <script setup lang="ts">
-import { Github, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-vue-next'
-import { Button } from '~/components/ui/button'
-import { Badge } from '~/components/ui/badge'
+import { Github, ExternalLink } from 'lucide-vue-next'
 import type { ApiProject } from '~/composables/usePublicApi'
 
 const { fetchProjects } = usePublicApi()
 const projects = ref<ApiProject[]>([])
+const isVisible = ref(false)
+const sectionRef = ref<HTMLElement | null>(null)
+const scrollRef = ref<HTMLElement | null>(null)
+const scrollProgress = ref(0)
+const activeIndex = ref(0)
+
+// Tech icon map
+const techIconMap: Record<string, string> = {
+  'Vue.js': 'simple-icons:vuedotjs',
+  'Nuxt.js': 'simple-icons:nuxtdotjs',
+  'Next.js': 'simple-icons:nextdotjs',
+  'React': 'simple-icons:react',
+  'TypeScript': 'simple-icons:typescript',
+  'JavaScript': 'simple-icons:javascript',
+  'Tailwind CSS': 'simple-icons:tailwindcss',
+  'HTML/CSS': 'simple-icons:html5',
+  'NestJS': 'simple-icons:nestjs',
+  'Node.js': 'simple-icons:nodedotjs',
+  'Express': 'simple-icons:express',
+  'Python': 'simple-icons:python',
+  'FastAPI': 'simple-icons:fastapi',
+  'Django': 'simple-icons:django',
+  'REST API': 'simple-icons:openapiinitiative',
+  'GraphQL': 'simple-icons:graphql',
+  'PostgreSQL': 'simple-icons:postgresql',
+  'MySQL': 'simple-icons:mysql',
+  'MongoDB': 'simple-icons:mongodb',
+  'Firebase': 'simple-icons:firebase',
+  'Prisma': 'simple-icons:prisma',
+  'Redis': 'simple-icons:redis',
+  'Docker': 'simple-icons:docker',
+  'Git': 'simple-icons:git',
+  'GitHub': 'simple-icons:github',
+  'Linux': 'simple-icons:linux',
+  'AWS': 'simple-icons:amazonaws',
+  'Vercel': 'simple-icons:vercel',
+  'Figma': 'simple-icons:figma',
+  'Flutter': 'simple-icons:flutter',
+  'Kotlin': 'simple-icons:kotlin',
+  'PHP': 'simple-icons:php',
+  'Laravel': 'simple-icons:laravel',
+  'CI/CD': 'simple-icons:githubactions',
+  'Arduino': 'simple-icons:arduino',
+  'MQTT': 'simple-icons:mqtt',
+  'TensorFlow': 'simple-icons:tensorflow',
+  'OpenAI': 'simple-icons:openai',
+  'Supabase': 'simple-icons:supabase',
+  'Three.js': 'simple-icons:threedotjs',
+}
+
+function getTechIcon(name: string): string | null {
+  return techIconMap[name] ?? null
+}
+
+// Throttled scroll handler using rAF
+let rafId = 0
+function onScroll() {
+  if (rafId) return
+  rafId = requestAnimationFrame(() => {
+    rafId = 0
+    const el = scrollRef.value
+    if (!el) return
+    const { scrollTop, scrollHeight, clientHeight } = el
+    const maxScroll = scrollHeight - clientHeight
+    scrollProgress.value = maxScroll > 0 ? scrollTop / maxScroll : 0
+
+    // Determine which project is most visible
+    const children = el.children
+    const containerTop = el.getBoundingClientRect().top
+    const containerBottom = containerTop + clientHeight
+    let best = 0
+    let bestVisible = 0
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i]
+      if (!child) continue
+      const rect = child.getBoundingClientRect()
+      const top = Math.max(rect.top, containerTop)
+      const bottom = Math.min(rect.bottom, containerBottom)
+      const visible = bottom - top
+      if (visible > bestVisible) {
+        bestVisible = visible
+        best = i
+      }
+    }
+    activeIndex.value = best
+  })
+}
+
+onUnmounted(() => { if (rafId) cancelAnimationFrame(rafId) })
+
+// Scroll to a specific project
+function scrollToProject(index: number) {
+  const el = scrollRef.value
+  if (!el) return
+  const children = el.querySelectorAll('.project-block')
+  const target = children[index] as HTMLElement | undefined
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
 
 onMounted(async () => {
   try {
@@ -13,213 +111,198 @@ onMounted(async () => {
   } catch (e) {
     console.error('Failed to fetch projects:', e)
   }
-})
 
-// Carousel state
-const currentIndex = ref(0)
-const perPage = ref(2)
-const carouselTrack = ref<HTMLElement | null>(null)
-const isDragging = ref(false)
-const dragStartX = ref(0)
-const dragDelta = ref(0)
-
-const totalPages = computed(() =>
-  Math.ceil(projects.value.length / perPage.value)
-)
-
-const currentPage = computed(() =>
-  Math.floor(currentIndex.value / perPage.value)
-)
-
-function goToPage(page: number) {
-  currentIndex.value = Math.max(0, Math.min(page * perPage.value, projects.value.length - perPage.value))
-}
-
-function prev() {
-  const page = Math.max(0, currentPage.value - 1)
-  goToPage(page)
-}
-
-function next() {
-  const page = Math.min(totalPages.value - 1, currentPage.value + 1)
-  goToPage(page)
-}
-
-// Drag/swipe support
-function onDragStart(e: MouseEvent | TouchEvent) {
-  isDragging.value = true
-  dragDelta.value = 0
-  dragStartX.value = 'touches' in e ? (e.touches[0]?.clientX ?? 0) : e.clientX
-}
-
-function onDragMove(e: MouseEvent | TouchEvent) {
-  if (!isDragging.value) return
-  const x = 'touches' in e ? (e.touches[0]?.clientX ?? dragStartX.value) : e.clientX
-  dragDelta.value = x - dragStartX.value
-}
-
-function onDragEnd() {
-  if (!isDragging.value) return
-  isDragging.value = false
-  if (dragDelta.value < -60) next()
-  else if (dragDelta.value > 60) prev()
-  dragDelta.value = 0
-}
-
-// Responsive perPage
-onMounted(() => {
-  const update = () => { perPage.value = window.innerWidth < 768 ? 1 : 2 }
-  update()
-  window.addEventListener('resize', update)
-  onUnmounted(() => window.removeEventListener('resize', update))
-})
-
-const translateX = computed(() => {
-  const base = -(currentIndex.value / perPage.value) * 100
-  if (isDragging.value && carouselTrack.value) {
-    const pct = (dragDelta.value / carouselTrack.value.offsetWidth) * 100
-    return base + pct
-  }
-  return base
+  const observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0]?.isIntersecting) {
+        isVisible.value = true
+        observer.disconnect()
+      }
+    },
+    { threshold: 0.1 },
+  )
+  if (sectionRef.value) observer.observe(sectionRef.value)
 })
 </script>
 
 <template>
-  <section id="projects" class="py-16 sm:py-24">
-    <div class="container mx-auto px-4 max-w-6xl">
+  <section
+    id="projects"
+    ref="sectionRef"
+    class="relative py-16 sm:py-24"
+  >
+    <div class="container mx-auto px-4 max-w-7xl">
       <!-- Heading -->
       <h2 class="mb-2 text-2xl font-bold tracking-tight text-center">
         <EffectsGlitchText text="Projects" class="retro-glow" :continuous="false" intensity="low" />
       </h2>
-      <p class="mb-12 text-center text-muted-foreground font-display text-lg">
+      <p class="mb-10 sm:mb-14 text-center text-muted-foreground font-display text-lg">
         <EffectsScrambledText text="Some things I've built" :speed="40" />
       </p>
 
-      <!-- Carousel wrapper -->
-      <div class="relative group/carousel">
-
-        <!-- Prev button -->
-        <button
-          v-if="projects.length > perPage"
-          :disabled="currentPage === 0"
-          class="carousel-nav carousel-nav-left"
-          aria-label="Previous"
-          @click="prev"
-        >
-          <ChevronLeft class="h-5 w-5" />
-        </button>
-
-        <!-- Track viewport -->
+      <!-- Scroll showcase wrapper -->
+      <div
+        class="scroll-showcase"
+        :class="{ 'scroll-showcase--visible': isVisible }"
+      >
+        <!-- Scrollable content -->
         <div
-          ref="carouselTrack"
-          class="overflow-hidden select-none"
-          @mousedown="onDragStart"
-          @mousemove="onDragMove"
-          @mouseup="onDragEnd"
-          @mouseleave="onDragEnd"
-          @touchstart.passive="onDragStart"
-          @touchmove.passive="onDragMove"
-          @touchend="onDragEnd"
+          ref="scrollRef"
+          class="scroll-viewport"
+          @scroll.passive="onScroll"
         >
+          <!-- Each project block (full-width row) -->
           <div
-            class="flex"
-            :class="isDragging ? '' : 'transition-transform duration-500 ease-in-out'"
-            :style="{ transform: `translateX(${translateX}%)` }"
+            v-for="(project, i) in projects"
+            :key="project.id"
+            class="project-block"
           >
-            <!-- Each page group -->
-            <div
-              v-for="(project, i) in projects"
-              :key="project.id"
-              :style="{ width: `${100 / perPage}%`, flexShrink: 0 }"
-              :class="i % perPage === 0 ? 'pl-0' : ''"
-              class="px-2"
-            >
-              <!-- Card -->
-              <div class="project-card rounded-xl border border-primary/20 bg-card/60 backdrop-blur-sm overflow-hidden transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_20px_rgba(0,255,0,0.07)]">
-                <!-- Image -->
-                <div class="project-img-wrap aspect-video bg-linear-to-br from-primary/10 to-accent/20 flex items-center justify-center overflow-hidden">
-                  <img
-                    v-if="project.image"
-                    :src="project.image"
-                    :alt="project.title"
-                    class="project-img w-full h-full object-cover"
-                    draggable="false"
-                  />
-                  <span v-else class="text-5xl font-retro text-primary/30 group-hover:text-primary/60 transition-colors retro-glow">
-                    {{ project.title.charAt(0) }}
+            <div class="project-block__row">
+              <!-- Left: Info -->
+              <div class="project-block__info">
+                <!-- Title -->
+                <div class="flex items-start gap-3 mb-3">
+                  <div class="mt-2 h-1 w-6 rounded-full bg-primary shrink-0 shadow-[0_0_10px_hsl(120_100%_65%/0.6)]" />
+                  <h3 class="font-retro text-lg sm:text-xl lg:text-2xl text-primary retro-glow leading-tight">
+                    {{ project.title }}
+                  </h3>
+                </div>
+
+                <!-- Description -->
+                <p class="text-sm text-muted-foreground/80 leading-relaxed font-mono mb-5 max-w-md">
+                  {{ project.description }}
+                </p>
+
+                <!-- Feature bullets (parse sentences from description) -->
+                <ul class="space-y-2 mb-6">
+                  <li
+                    v-for="(tech, ti) in project.tech.slice(0, 3)"
+                    :key="ti"
+                    class="flex items-start gap-2 text-sm text-muted-foreground/70 font-mono"
+                  >
+                    <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary/70 shrink-0" />
+                    <span>Built with <span class="text-primary/80">{{ tech }}</span></span>
+                  </li>
+                </ul>
+
+                <!-- Tech Stack badges -->
+                <div class="flex flex-wrap gap-2 mb-6">
+                  <span
+                    v-for="tech in project.tech"
+                    :key="tech"
+                    class="tech-chip"
+                  >
+                    <Icon
+                      v-if="getTechIcon(tech)"
+                      :name="getTechIcon(tech)!"
+                      class="tech-chip__icon"
+                    />
+                    <span v-else class="tech-chip__dot" />
+                    {{ tech }}
                   </span>
                 </div>
 
-                <!-- Info -->
-                <div class="p-5 space-y-3">
-                  <div class="flex items-start justify-between gap-2">
-                    <h3 class="font-retro text-sm sm:text-base text-primary retro-glow leading-snug">{{ project.title }}</h3>
-                    <div class="flex items-center gap-1.5 shrink-0">
-                      <a
-                        v-if="project.github"
-                        :href="project.github"
-                        target="_blank"
-                        rel="noopener"
-                        class="rounded-md border border-primary/20 bg-background/50 p-1.5 text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors"
-                      >
-                        <Github class="h-4 w-4" />
-                      </a>
-                      <a
-                        v-if="project.liveUrl"
-                        :href="project.liveUrl"
-                        target="_blank"
-                        rel="noopener"
-                        class="rounded-md border border-primary/20 bg-background/50 p-1.5 text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors"
-                      >
-                        <ExternalLink class="h-4 w-4" />
-                      </a>
+                <!-- Action links -->
+                <div class="flex items-center gap-3">
+                  <a
+                    v-if="project.github"
+                    :href="project.github"
+                    target="_blank"
+                    rel="noopener"
+                    class="project-link"
+                  >
+                    <Github class="h-4 w-4" />
+                    <span>Source</span>
+                  </a>
+                  <a
+                    v-if="project.liveUrl"
+                    :href="project.liveUrl"
+                    target="_blank"
+                    rel="noopener"
+                    class="project-link project-link--primary"
+                  >
+                    <ExternalLink class="h-4 w-4" />
+                    <span>Live Demo</span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Right: Image showcase -->
+              <div class="project-block__visual">
+                <div v-if="project.image || project.mobileImage" class="visual-collage">
+                  <!-- Desktop frame -->
+                  <div v-if="project.image" class="frame-desktop">
+                    <div class="frame-desktop__bar">
+                      <span class="frame-dot" />
+                      <span class="frame-dot" />
+                      <span class="frame-dot" />
+                    </div>
+                    <div class="frame-desktop__screen">
+                      <img
+                        :src="project.image"
+                        :alt="`${project.title} - desktop`"
+                        class="project-img"
+                        draggable="false"
+                      />
+                      <div class="frame-scanlines" />
                     </div>
                   </div>
-
-                  <p class="text-xs text-muted-foreground leading-relaxed line-clamp-3 font-mono">{{ project.description }}</p>
-
-                  <div class="flex flex-wrap gap-1.5 pt-1">
-                    <Badge v-for="tech in project.tech" :key="tech" variant="secondary" class="text-[10px] px-2 py-0.5">
-                      {{ tech }}
-                    </Badge>
+                  <!-- Mobile frame -->
+                  <div v-if="project.mobileImage || project.image" class="frame-mobile">
+                    <div class="frame-mobile__notch" />
+                    <div class="frame-mobile__screen">
+                      <img
+                        :src="project.mobileImage || project.image!"
+                        :alt="`${project.title} - mobile`"
+                        class="project-img project-img--mobile"
+                        draggable="false"
+                      />
+                      <div class="frame-scanlines" />
+                    </div>
                   </div>
+                </div>
+                <div v-else class="visual-placeholder">
+                  <span class="text-7xl font-retro text-primary/15 retro-glow select-none">
+                    {{ project.title.charAt(0) }}
+                  </span>
                 </div>
               </div>
             </div>
+
+            <!-- Divider between projects -->
+            <div v-if="i < projects.length - 1" class="project-divider" />
           </div>
         </div>
 
-        <!-- Next button -->
-        <button
-          v-if="projects.length > perPage"
-          :disabled="currentPage >= totalPages - 1"
-          class="carousel-nav carousel-nav-right"
-          aria-label="Next"
-          @click="next"
-        >
-          <ChevronRight class="h-5 w-5" />
-        </button>
-      </div>
+        <!-- Scroll progress bar (center vertical timeline) -->
+        <div class="scroll-progress" aria-hidden="true">
+          <div class="scroll-progress__track" />
+          <div
+            class="scroll-progress__fill"
+            :style="{ transform: `scaleY(${scrollProgress})` }"
+          />
+          <div
+            class="scroll-progress__thumb"
+            :style="{ transform: `translate(-50%, -50%) translateY(${scrollProgress * 100}cqh)` }"
+          />
+        </div>
 
-      <!-- Dot indicators -->
-      <div v-if="totalPages > 1" class="flex items-center justify-center gap-2 mt-8">
-        <button
-          v-for="page in totalPages"
-          :key="page"
-          :aria-label="`Go to page ${page}`"
-          :class="[
-            'rounded-full transition-all duration-300',
-            currentPage === page - 1
-              ? 'w-6 h-2 bg-primary shadow-[0_0_8px_rgba(0,255,0,0.6)]'
-              : 'w-2 h-2 bg-primary/30 hover:bg-primary/60',
-          ]"
-          @click="goToPage(page - 1)"
-        />
+        <!-- Side nav dots -->
+        <div v-if="projects.length > 1" class="scroll-nav">
+          <button
+            v-for="(project, i) in projects"
+            :key="project.id"
+            :aria-label="`Go to ${project.title}`"
+            class="scroll-nav__dot"
+            :class="{ 'scroll-nav__dot--active': i === activeIndex }"
+            @click="scrollToProject(i)"
+          />
+        </div>
       </div>
 
       <!-- Counter -->
-      <p v-if="projects.length > 0" class="text-center text-xs text-muted-foreground font-mono mt-4">
-        {{ currentPage * perPage + 1 }}–{{ Math.min((currentPage + 1) * perPage, projects.length) }}
+      <p v-if="projects.length > 0" class="text-center text-xs text-muted-foreground font-mono mt-6">
+        {{ activeIndex + 1 }}
         <span class="text-primary/50">/</span>
         {{ projects.length }} projects
       </p>
@@ -228,159 +311,440 @@ const translateX = computed(() => {
 </template>
 
 <style scoped>
-/* Nav buttons */
-.carousel-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
+/* ── Scroll Showcase Container ──────────────────────────── */
+.scroll-showcase {
+  position: relative;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.scroll-showcase--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Scroll Viewport (bounded height, scrolls inside) ──── */
+.scroll-viewport {
+  max-height: 75vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  padding-right: 1rem;
+  contain: layout style;
+
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: hsl(120 40% 25% / 0.4) transparent;
+}
+.scroll-viewport::-webkit-scrollbar {
+  width: 4px;
+}
+.scroll-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-viewport::-webkit-scrollbar-thumb {
+  background: hsl(120 40% 25% / 0.3);
+  border-radius: 4px;
+}
+.scroll-viewport::-webkit-scrollbar-thumb:hover {
+  background: hsl(120 60% 35% / 0.5);
+}
+
+/* ── Project Block ──────────────────────────────────────── */
+.project-block {
+  padding: 2rem 0;
+}
+.project-block:first-child {
+  padding-top: 0.5rem;
+}
+.project-block:last-child {
+  padding-bottom: 0.5rem;
+}
+
+.project-block__row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .project-block__row {
+    grid-template-columns: 1fr 1.2fr;
+    gap: 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .project-block__row {
+    grid-template-columns: 1fr 1.3fr;
+    gap: 4rem;
+  }
+}
+
+/* Alternate: even projects flip layout */
+@media (min-width: 768px) {
+  .project-block:nth-child(even) .project-block__row {
+    direction: rtl;
+  }
+  .project-block:nth-child(even) .project-block__row > * {
+    direction: ltr;
+  }
+}
+
+/* ── Info Side ──────────────────────────────────────────── */
+.project-block__info {
+  padding: 0 0.5rem;
+}
+
+/* ── Visual Side ────────────────────────────────────────── */
+.project-block__visual {
+  position: relative;
+}
+
+.visual-collage {
+  position: relative;
+  min-height: 280px;
+}
+
+@media (min-width: 768px) {
+  .visual-collage {
+    min-height: 340px;
+  }
+}
+
+.visual-placeholder {
+  min-height: 280px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, hsl(120 15% 8%) 0%, hsl(240 15% 6%) 100%);
+  border: 1px solid hsl(120 30% 20% / 0.2);
+}
+
+/* ── Desktop Frame ──────────────────────────────────────── */
+.frame-desktop {
+  position: relative;
+  width: 90%;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid hsl(120 30% 25% / 0.3);
+  background: hsl(240 15% 6%);
+  box-shadow:
+    0 8px 40px hsl(240 20% 2% / 0.5),
+    0 0 60px hsl(120 60% 20% / 0.06);
+  z-index: 1;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.5s ease;
+  transform: translateZ(0);
+  contain: content;
+}
+
+.visual-collage:hover .frame-desktop {
+  transform: translateY(-4px);
+  box-shadow:
+    0 12px 50px hsl(240 20% 2% / 0.6),
+    0 0 80px hsl(120 60% 20% / 0.1);
+}
+
+.frame-desktop__bar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
+  background: hsl(240 12% 10%);
+  border-bottom: 1px solid hsl(120 20% 15% / 0.2);
+}
+
+.frame-dot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  border: 1px solid hsla(120, 100%, 65%, 0.3);
-  background: hsla(240, 20%, 4%, 0.8);
-  color: hsl(120, 100%, 65%);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
-  backdrop-filter: blur(8px);
+  background: hsl(120 30% 25% / 0.5);
+}
+.frame-dot:first-child { background: hsl(0 60% 45% / 0.6); }
+.frame-dot:nth-child(2) { background: hsl(45 70% 50% / 0.6); }
+.frame-dot:last-child { background: hsl(120 60% 40% / 0.6); }
+
+.frame-desktop__screen {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
 }
 
-.carousel-nav:hover:not(:disabled) {
-  border-color: hsla(120, 100%, 65%, 0.7);
-  box-shadow: 0 0 12px hsla(120, 100%, 65%, 0.3);
+/* ── Mobile Frame ───────────────────────────────────────── */
+.frame-mobile {
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+  width: 28%;
+  max-width: 140px;
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 2px solid hsl(120 30% 25% / 0.35);
+  background: hsl(240 15% 6%);
+  box-shadow:
+    0 8px 30px hsl(240 20% 2% / 0.6),
+    0 0 40px hsl(120 60% 20% / 0.06);
+  z-index: 2;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.carousel-nav:disabled {
-  opacity: 0 !important;
-  cursor: default;
+.visual-collage:hover .frame-mobile {
+  transform: translate(-4px, -6px);
 }
 
-.carousel-nav-left  { left: -1.25rem; }
-.carousel-nav-right { right: -1.25rem; }
-
-.group\/carousel:hover .carousel-nav:not(:disabled) {
-  opacity: 1;
+.frame-mobile__notch {
+  height: 18px;
+  background: hsl(240 12% 10%);
+  position: relative;
+}
+.frame-mobile__notch::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36%;
+  height: 6px;
+  border-radius: 4px;
+  background: hsl(0 0% 15%);
 }
 
-/* Base green retro filter on images */
+.frame-mobile__screen {
+  position: relative;
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+}
+
+/* ── Project Images ─────────────────────────────────────── */
 .project-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   filter:
-    grayscale(40%)
-    sepia(60%)
-    hue-rotate(80deg)
-    saturate(180%)
-    brightness(0.75)
-    contrast(1.1);
-  transition: filter 0.4s ease;
-}
-
-.project-img-wrap:hover .project-img {
-  animation: img-glitch 2s steps(1) infinite;
-  filter:
-    grayscale(10%)
+    grayscale(20%)
     sepia(30%)
     hue-rotate(80deg)
-    saturate(130%)
-    brightness(0.85)
+    saturate(140%)
+    brightness(0.75)
+    contrast(1.1);
+  transition: filter 0.5s ease;
+  will-change: filter;
+  transform: translateZ(0);
+}
+
+.visual-collage:hover .project-img {
+  filter:
+    grayscale(5%)
+    sepia(10%)
+    hue-rotate(80deg)
+    saturate(110%)
+    brightness(0.9)
     contrast(1.05);
 }
 
-.project-img-wrap {
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
+.project-img--mobile {
+  object-position: top center;
 }
 
-.project-img-wrap::before,
-.project-img-wrap::after {
-  content: '';
+/* Scanline overlay */
+.frame-scanlines {
   position: absolute;
   inset: 0;
-  opacity: 0;
   pointer-events: none;
-  mix-blend-mode: screen;
   z-index: 2;
-}
-
-.project-img-wrap::before {
-  background: linear-gradient(
+  background: repeating-linear-gradient(
     0deg,
-    transparent 0%, transparent 30%,
-    hsla(180, 100%, 60%, 0.18) 30.5%, hsla(180, 100%, 60%, 0.18) 33%,
-    transparent 33.5%, transparent 60%,
-    hsla(120, 100%, 50%, 0.14) 60.5%, hsla(120, 100%, 50%, 0.14) 63%,
-    transparent 63.5%, transparent 100%
+    transparent,
+    transparent 2px,
+    hsl(0 0% 0% / 0.06) 2px,
+    hsl(0 0% 0% / 0.06) 4px
   );
 }
 
-.project-img-wrap::after {
+/* ── Divider ────────────────────────────────────────────── */
+.project-divider {
+  height: 1px;
+  margin: 1rem 0 0;
   background: linear-gradient(
-    0deg,
-    transparent 0%, transparent 45%,
-    hsla(300, 80%, 70%, 0.15) 45.5%, hsla(300, 80%, 70%, 0.15) 48%,
-    transparent 48.5%, transparent 75%,
-    hsla(180, 100%, 60%, 0.12) 75.5%, hsla(180, 100%, 60%, 0.12) 78%,
-    transparent 78.5%, transparent 100%
+    90deg,
+    transparent 0%,
+    hsl(120 40% 30% / 0.3) 20%,
+    hsl(120 60% 40% / 0.15) 50%,
+    hsl(120 40% 30% / 0.3) 80%,
+    transparent 100%
   );
 }
 
-.project-img-wrap:hover::before {
-  animation: img-overlay-cyan 2s steps(1) infinite;
+/* ── Scroll Progress Bar (vertical, right side) ─────────── */
+.scroll-progress {
+  position: absolute;
+  right: -1.5rem;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  pointer-events: none;
+  display: none;
 }
 
-.project-img-wrap:hover::after {
-  animation: img-overlay-magenta 2s steps(1) infinite;
+@media (min-width: 768px) {
+  .scroll-progress {
+    display: block;
+  }
 }
 
-@keyframes img-glitch {
-  0%, 100%  { transform: none; filter: none; clip-path: none; }
-  5%        { transform: translateX(-3px) skewX(-1.5deg); filter: hue-rotate(90deg) brightness(1.25); }
-  6%        { transform: translateX(4px) skewX(0.5deg); filter: hue-rotate(-90deg) brightness(0.9); }
-  7%        { transform: none; filter: none; }
-  20%       { transform: none; filter: none; clip-path: none; }
-  21%       { transform: translateX(5px) skewX(1.5deg); filter: hue-rotate(180deg) brightness(0.8); clip-path: inset(15% 0 55% 0); }
-  22%       { transform: translateX(-4px); filter: hue-rotate(-45deg); clip-path: inset(55% 0 5% 0); }
-  23%       { transform: translateX(2px); filter: none; clip-path: none; }
-  24%       { transform: none; filter: none; }
-  50%       { transform: none; filter: none; }
-  51%       { transform: translateX(-6px); filter: hue-rotate(90deg) brightness(1.3); clip-path: inset(25% 0 50% 0); }
-  52%       { transform: translateX(6px); filter: hue-rotate(-90deg); clip-path: inset(50% 0 15% 0); }
-  53%       { transform: none; filter: none; clip-path: none; }
-  80%       { transform: none; filter: none; }
-  81%       { transform: translateX(3px) skewX(1deg); filter: hue-rotate(45deg) brightness(1.1); }
-  82%       { transform: none; filter: none; }
+.scroll-progress__track {
+  position: absolute;
+  inset: 0;
+  background: hsl(120 20% 15% / 0.25);
+  border-radius: 2px;
 }
 
-@keyframes img-overlay-cyan {
-  0%, 100%  { opacity: 0; transform: translateX(0); }
-  5%        { opacity: 1; transform: translateX(-4px); }
-  6%        { opacity: 1; transform: translateX(3px); }
-  7%        { opacity: 0; }
-  21%       { opacity: 0; }
-  22%       { opacity: 1; transform: translateX(4px); }
-  23%       { opacity: 1; transform: translateX(-2px); }
-  24%       { opacity: 0; }
-  51%       { opacity: 0; }
-  52%       { opacity: 1; transform: translateX(-3px); }
-  53%       { opacity: 0; }
+.scroll-progress__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(
+    180deg,
+    hsl(120 100% 65%) 0%,
+    hsl(120 80% 50%) 100%
+  );
+  box-shadow: 0 0 10px hsl(120 100% 50% / 0.4);
+  transform-origin: top;
+  will-change: transform;
 }
 
-@keyframes img-overlay-magenta {
-  0%, 100%  { opacity: 0; }
-  6%        { opacity: 1; transform: translateX(3px); }
-  7%        { opacity: 1; transform: translateX(-2px); }
-  8%        { opacity: 0; }
-  22%       { opacity: 0; }
-  23%       { opacity: 1; transform: translateX(-4px); }
-  24%       { opacity: 0; }
-  52%       { opacity: 0; }
-  53%       { opacity: 1; transform: translateX(3px); }
-  54%       { opacity: 0; }
-  81%       { opacity: 1; transform: translateX(-1px); }
-  82%       { opacity: 0; }
+.scroll-progress__thumb {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: hsl(120 100% 65%);
+  border: 2px solid hsl(240 15% 6%);
+  box-shadow:
+    0 0 8px hsl(120 100% 50% / 0.6),
+    0 0 20px hsl(120 100% 50% / 0.2);
+  will-change: transform;
+}
+
+/* ── Side Nav Dots ──────────────────────────────────────── */
+.scroll-nav {
+  position: absolute;
+  left: -2.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: none;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .scroll-nav {
+    display: flex;
+  }
+}
+
+.scroll-nav__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  border: none;
+  background: hsl(120 30% 25% / 0.4);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scroll-nav__dot--active {
+  width: 0.5rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: hsl(120 100% 65%);
+  box-shadow: 0 0 10px hsl(120 100% 65% / 0.5);
+}
+
+.scroll-nav__dot:hover:not(.scroll-nav__dot--active) {
+  background: hsl(120 50% 40% / 0.6);
+  transform: scale(1.3);
+}
+
+/* ── Tech Chips ─────────────────────────────────────────── */
+.tech-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  background: hsl(120 20% 10% / 0.5);
+  border: 1px solid hsl(120 40% 30% / 0.35);
+  color: hsl(120 60% 75%);
+  white-space: nowrap;
+  transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+}
+.tech-chip:hover {
+  border-color: hsl(120 70% 45% / 0.5);
+  background: hsl(120 25% 12% / 0.7);
+  box-shadow: 0 0 12px hsl(120 100% 50% / 0.08);
+}
+
+.tech-chip__icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+.tech-chip:hover .tech-chip__icon {
+  opacity: 1;
+}
+
+.tech-chip__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: hsl(120 80% 55%);
+  flex-shrink: 0;
+}
+
+/* ── Project Links ──────────────────────────────────────── */
+.project-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  border: 1px solid hsl(120 30% 20% / 0.4);
+  background: hsl(240 15% 8% / 0.6);
+  color: hsl(0 0% 70%);
+  text-decoration: none;
+  transition: all 0.25s ease;
+}
+.project-link:hover {
+  border-color: hsl(120 60% 40% / 0.5);
+  color: hsl(120 80% 70%);
+  box-shadow: 0 0 15px hsl(120 100% 50% / 0.08);
+  transform: translateY(-1px);
+}
+.project-link--primary {
+  border-color: hsl(120 50% 30% / 0.5);
+  background: hsl(120 30% 10% / 0.4);
+  color: hsl(120 70% 70%);
+}
+.project-link--primary:hover {
+  background: hsl(120 35% 13% / 0.6);
+  border-color: hsl(120 80% 50% / 0.5);
+  color: hsl(120 100% 80%);
+  box-shadow: 0 0 20px hsl(120 100% 50% / 0.12);
 }
 </style>

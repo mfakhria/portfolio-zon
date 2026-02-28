@@ -21,6 +21,7 @@ interface Project {
   github?: string
   liveUrl?: string
   image?: string
+  mobileImage?: string
   featured: boolean
   order: number
 }
@@ -38,6 +39,7 @@ const form = reactive({
   github: '',
   liveUrl: '',
   image: '',
+  mobileImage: '',
   featured: false,
   order: 0,
 })
@@ -61,6 +63,7 @@ function openEdit(project: Project) {
   form.github = project.github || ''
   form.liveUrl = project.liveUrl || ''
   form.image = project.image || ''
+  form.mobileImage = project.mobileImage || ''
   form.featured = project.featured
   form.order = project.order
   showForm.value = true
@@ -74,6 +77,7 @@ function resetForm() {
   form.github = ''
   form.liveUrl = ''
   form.image = ''
+  form.mobileImage = ''
   form.featured = false
   form.order = 0
 }
@@ -99,6 +103,7 @@ async function handleSubmit() {
     github: form.github || undefined,
     liveUrl: form.liveUrl || undefined,
     image: form.image || undefined,
+    mobileImage: form.mobileImage || undefined,
     featured: form.featured,
     order: form.order,
   }
@@ -198,8 +203,13 @@ onMounted(fetchProjects)
             </div>
 
             <div class="space-y-2">
-              <label class="text-sm font-medium">Image Path</label>
-              <Input v-model="form.image" placeholder="/project-image.png" />
+              <label class="text-sm font-medium">Desktop Image URL</label>
+              <Input v-model="form.image" placeholder="/project-desktop.png or https://..." />
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-sm font-medium">Mobile Image URL</label>
+              <Input v-model="form.mobileImage" placeholder="/project-mobile.png or https://..." />
             </div>
 
             <div class="grid gap-4 sm:grid-cols-2">

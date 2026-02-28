@@ -33,6 +33,10 @@ export class CreateProjectDto {
   @IsOptional()
   image?: string;
 
+  @IsString()
+  @IsOptional()
+  mobileImage?: string;
+
   @IsBoolean()
   @IsOptional()
   featured?: boolean;

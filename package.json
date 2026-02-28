@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@nuxt/icon": "^2.2.1",
     "@tailwindcss/vite": "^4.2.0",
     "ably": "^2.18.0",
     "class-variance-authority": "^0.7.1",
@@ -28,6 +29,9 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@iconify-json/devicon": "^1.2.59",
+    "@iconify-json/logos": "^1.2.10",
+    "@iconify-json/simple-icons": "^1.2.71",
     "@types/node": "^25.3.0",
     "typescript": "^5.9.3"
   }

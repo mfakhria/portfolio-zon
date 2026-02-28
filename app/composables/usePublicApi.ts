@@ -21,6 +21,7 @@ interface ApiProject {
   github: string | null
   liveUrl: string | null
   image: string | null
+  mobileImage: string | null
   featured: boolean
   order: number
 }
