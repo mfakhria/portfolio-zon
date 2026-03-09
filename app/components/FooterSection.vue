@@ -40,7 +40,7 @@ const dockItems = [
 
 <style scoped>
 .secret-link {
-  opacity: 0.50;
+  opacity: 0.50; 
   color: inherit;
   text-decoration: none;
   cursor: default;
