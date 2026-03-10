@@ -21,6 +21,7 @@ useHead({
         <main>
           <SectionsHeroSection />
           <SectionsAboutSection />
+          <SectionsContributionsSection />
           <SectionsProjectsSection />
           <SectionsSkillsSection />
           <SectionsGuestBookSection />
