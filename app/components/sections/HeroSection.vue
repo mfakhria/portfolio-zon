@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowDown } from 'lucide-vue-next'
+import { ArrowDown, Download } from 'lucide-vue-next'
 import { Button } from '~/components/ui/button'
 </script>
 
@@ -8,6 +8,13 @@ import { Button } from '~/components/ui/button'
     <div class="container relative z-10 mx-auto px-4 max-w-6xl h-screen flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-4">
       <!-- Left: Text Content -->
       <div class="flex-1 text-center lg:text-left pt-20 lg:pt-0">
+        <!-- Mobile Profile Photo -->
+        <div class="flex justify-center mb-6 lg:hidden">
+          <div class="relative w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden border-2 border-primary/30 shadow-lg shadow-primary/20">
+            <img src="/lanyard-photo.jpg" alt="Muhammad Fakhri Alauddin" class="w-full h-full object-cover" />
+          </div>
+        </div>
+
         <p class="mb-4 text-lg text-muted-foreground font-display">
           <EffectsBlurText text="Hello, I'm" :delay="200" :duration="800" />
         </p>
@@ -38,8 +45,9 @@ import { Button } from '~/components/ui/button'
           <Button as="a" href="#projects" size="lg" class="retro-pixel-border font-retro text-xs uppercase tracking-widest">
             View Projects
           </Button>
-          <Button as="a" href="#contact" variant="outline" size="lg" class="retro-pixel-border font-retro text-xs uppercase tracking-widest">
-            Get in Touch
+          <Button as="a" href="/cv.pdf" download variant="outline" size="lg" class="retro-pixel-border font-retro text-xs uppercase tracking-widest">
+            <Download class="h-4 w-4 mr-2" />
+            My Resume
           </Button>
         </div>
       </div>
