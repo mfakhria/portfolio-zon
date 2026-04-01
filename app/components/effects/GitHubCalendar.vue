@@ -11,7 +11,7 @@ interface ContributionDay {
 const props = withDefaults(defineProps<{
   username: string
 }>(), {
-  username: 'mfakhria'
+  username: 'mfakhria',
 })
 
 const contributions = ref<ContributionDay[]>([])
@@ -22,19 +22,21 @@ const error = ref(false)
 const endDate = computed(() => new Date())
 
 const rangeColor = [
-  'hsl(240 15% 10% / 0.6)',   // empty — matches card bg
-  'hsl(180 60% 25%)',          // level 1 — dark cyan
-  'hsl(200 80% 45%)',          // level 2 — ocean blue
-  'hsl(260 70% 60%)',          // level 3 — purple
-  'hsl(300 100% 65%)',         // level 4 — bright magenta
+  'hsl(120 12% 11% / 0.96)',
+  'hsl(120 36% 24%)',
+  'hsl(120 54% 36%)',
+  'hsl(120 74% 50%)',
+  'hsl(120 96% 68%)',
 ]
 
 async function fetchContributions() {
   loading.value = true
   error.value = false
+
   try {
     const res = await fetch(`https://github-contributions-api.jogruber.de/v4/${encodeURIComponent(props.username)}?y=last`)
     if (!res.ok) throw new Error('Failed to fetch')
+
     const data = await res.json()
     contributions.value = data.contributions.map((day: ContributionDay) => ({
       date: day.date,
@@ -53,18 +55,15 @@ onMounted(fetchContributions)
 
 <template>
   <div class="github-calendar">
-    <!-- Loading state -->
     <div v-if="loading" class="flex items-center justify-center py-8">
       <div class="loading-pulse" />
       <span class="ml-3 text-sm text-muted-foreground font-mono">Loading contributions...</span>
     </div>
 
-    <!-- Error state -->
-    <div v-else-if="error" class="text-center py-8">
+    <div v-else-if="error" class="py-8 text-center">
       <p class="text-sm text-muted-foreground font-mono">Failed to load GitHub contributions</p>
     </div>
 
-    <!-- Calendar -->
     <div v-else class="calendar-wrapper">
       <ClientOnly>
         <CalendarHeatmap
@@ -94,9 +93,11 @@ onMounted(fetchContributions)
 .github-calendar::-webkit-scrollbar {
   height: 4px;
 }
+
 .github-calendar::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .github-calendar::-webkit-scrollbar-thumb {
   background: hsl(120 60% 25% / 0.4);
   border-radius: 4px;
@@ -108,6 +109,7 @@ onMounted(fetchContributions)
 
 .calendar-wrapper :deep(svg) {
   width: 100%;
+  filter: saturate(1.08) contrast(1.12);
 }
 
 .calendar-wrapper :deep(text) {
@@ -119,6 +121,15 @@ onMounted(fetchContributions)
 .calendar-wrapper :deep(rect) {
   rx: 2;
   ry: 2;
+  stroke: hsl(120 18% 8% / 0.92);
+  stroke-width: 0.8px;
+  filter: drop-shadow(0 0 3px hsl(120 100% 65% / 0.08));
+}
+
+.calendar-wrapper :deep(rect:hover) {
+  stroke: hsl(120 100% 78% / 0.82);
+  stroke-width: 1px;
+  filter: drop-shadow(0 0 5px hsl(120 100% 65% / 0.18));
 }
 
 .loading-pulse {
@@ -130,7 +141,15 @@ onMounted(fetchContributions)
 }
 
 @keyframes pulse-glow {
-  0%, 100% { opacity: 0.3; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1.2); }
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
 }
 </style>

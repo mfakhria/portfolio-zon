@@ -1,3 +1,5 @@
+name: be-portfolio
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -21,12 +23,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: portfolio_api
+    container_name: be-portfolio
     restart: unless-stopped
     ports:
       - "3001:3001"
     environment:
       DATABASE_URL: postgresql://postgres:170503mei@postgres:5432/portfolio?schema=public
+      DIRECT_URL: postgresql://postgres:170503mei@postgres:5432/portfolio?schema=public
       JWT_SECRET: portfolio-admin-jwt-secret-key-2026
       JWT_EXPIRES_IN: 1d
       ADMIN_EMAIL: admin@portfolio.com
@@ -37,7 +40,7 @@ services:
       postgres:
         condition: service_healthy
     command: >
-      sh -c "npx prisma migrate deploy && node dist/prisma/seed.js ; node dist/main.js"
+      sh -ec "npx prisma migrate deploy && node dist/prisma/seed.js && node dist/main.js"
 
 volumes:
   postgres_data:
